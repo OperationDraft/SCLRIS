@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LRIS — Security Log</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pirata+One&family=Special+Elite&display=swap">
+<style>
+:root{--bg:#171a15;--panel:#262a22;--ink:#dccfae;--mute:#9a9276;--brass:#b8933f;--brass2:#6b5521;--red:#b0402d;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;padding:24px 14px;color:var(--ink);font:14px/1.5 "Special Elite","Courier New",monospace;background:radial-gradient(ellipse at 50% 0,#2b3024 0,var(--bg) 70%) fixed}
+main{max-width:1100px;margin:auto}.panel{background:var(--panel);border:2px solid var(--brass);box-shadow:0 0 0 4px var(--panel),0 0 0 6px var(--brass2);padding:20px;margin:10px 0 22px}h1{font:2.5rem "Pirata One",Georgia,serif;text-align:center;margin:0}p{color:var(--mute)}label{display:block;color:var(--brass);margin:12px 0 5px}input,select{background:#14170f;border:2px solid var(--brass2);color:var(--ink);padding:10px;font:inherit;max-width:100%}button{padding:9px 15px;border:2px solid var(--brass);background:linear-gradient(#485139,#262b1d);color:var(--ink);font:inherit;cursor:pointer;margin:8px 6px 0 0}button:hover{filter:brightness(1.2)}.row{display:flex;gap:12px;flex-wrap:wrap;align-items:end}.status{color:var(--mute);min-height:1.5em}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:850px}th,td{text-align:left;padding:9px;border-bottom:1px solid var(--brass2);vertical-align:top}th{color:var(--brass)}.failed{color:#e07a64}.success{color:#a8c58b}.visit{color:var(--ink)}small{color:var(--mute)}
+</style></head><body><main>
+<section class="panel"><h1>LRIS — Security Log</h1><p>Private access-monitoring dashboard. Logs include visitor IP addresses and are retained for up to 30 days.</p>
+<div id="login"><label for="key">Admin key</label><input id="key" type="password" autocomplete="current-password"><button id="connect">Unlock log</button></div>
+<div id="controls" hidden><div class="row"><div><label for="limit">Entries</label><select id="limit"><option>50</option><option selected>100</option><option>250</option><option>500</option></select></div><button id="refresh">Refresh</button><button id="logout">Lock dashboard</button></div></div>
+<div id="status" class="status" role="status"></div></section>
+<section class="panel" id="results" hidden><div class="tablewrap"><table><thead><tr><th>Date / time (your local timezone)</th><th>Event</th><th>IP address</th><th>Browser / device</th><th>Page</th><th>Referrer</th></tr></thead><tbody id="rows"></tbody></table></div></section>
+</main><script>
+const API="https://lris-security.altofmy8.workers.dev";
+let adminKey="";
+const $=id=>document.getElementById(id);
+function browserLabel(ua){if(/Edg\//.test(ua))return "Edge";if(/Firefox\//.test(ua))return "Firefox";if(/Chrome\//.test(ua))return "Chrome";if(/Safari\//.test(ua))return "Safari";return ua.slice(0,90)||"Unknown"}
+async function load(){ $('status').textContent="Loading logs…";try{const r=await fetch(API+"/admin/logs?limit="+$('limit').value,{headers:{"X-LRIS-Admin-Key":adminKey}});if(r.status===401)throw new Error("Admin key rejected.");if(!r.ok)throw new Error("Server error: "+r.status);const data=await r.json();$('rows').replaceChildren();for(const item of data.logs){const tr=document.createElement('tr');const values=[new Date(item.created_at).toLocaleString()+" (local)",item.event.replaceAll('_',' '),item.ip,browserLabel(item.user_agent),item.path,item.referrer||"—"];values.forEach((v,i)=>{const td=document.createElement('td');td.textContent=v;if(i===1)td.className=item.event==='login_failed'?'failed':item.event==='login_success'?'success':'visit';tr.append(td)});$('rows').append(tr)}$('results').hidden=false;$('status').textContent=data.logs.length+" log entries loaded."}catch(e){$('status').textContent=e.message}}
+$('connect').onclick=async()=>{adminKey=$('key').value;if(!adminKey)return;$('key').value="";await load();if(!$('status').textContent.includes('rejected')&&!$('status').textContent.includes('error')){$('login').hidden=true;$('controls').hidden=false}};
+$('key').addEventListener('keydown',e=>{if(e.key==='Enter')$('connect').click()});$('refresh').onclick=load;$('limit').onchange=load;$('logout').onclick=()=>{adminKey="";$('login').hidden=false;$('controls').hidden=true;$('results').hidden=true;$('status').textContent="Dashboard locked."};
+</script></body></html>

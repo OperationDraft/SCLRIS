@@ -67,6 +67,7 @@ box-shadow:inset 0 1px 0 rgba(255,235,170,.6),inset 0 -3px 0 rgba(0,0,0,.5),0 2p
 .legend div{background:var(--noise),var(--field)}
 @media(max-width:520px){.agency span{font-size:1.35rem}.agency img{width:56px;height:56px}}
 #gerr{color:#e07a64;min-height:1.5em;margin:8px 0 0}
+#lrisPrivacy{color:var(--mute);font-size:.78rem;border-top:1px solid var(--brass2);margin-top:12px;padding-top:8px}
 #gate[hidden],#app[hidden]{display:none}
 .imgsec{border-top:2px solid var(--brass2);margin-top:24px;padding-top:2px}
 .hint{color:var(--mute);font-size:.85rem;margin:0 0 8px}
@@ -89,6 +90,7 @@ input[type=file]::file-selector-button{margin-right:12px;padding:7px 14px;border
 <div class="stamp">TOP SECRET</div>
 </header>
 <label for="pw">Clearance code</label>
+<p id="lrisPrivacy">Security notice: this site records visit time, IP address, browser information and access outcome for security monitoring. Logs are retained for up to 30 days.</p>
 <input id="pw" type="password" autocomplete="off" spellcheck="false">
 <p id="gerr" role="alert"></p>
 <div class="row"><button id="unlock">Unlock</button></div>
@@ -342,6 +344,18 @@ tk++;src=null;out=null;outPng=null;kind="";info=null;refresh();$("imgName").text
 const im=$("imgOut");im.removeAttribute("src");im.hidden=true;msg("Image removed.")};
 }
 
+// LRIS access logging. Replace this URL after deploying the Cloudflare Worker.
+const LRIS_LOG_API = "https://lris-security.altofmy8.workers.dev";
+function lrisLog(eventName) {
+  if (LRIS_LOG_API.includes("REPLACE-WITH-YOUR-WORKER")) return;
+  fetch(LRIS_LOG_API + "/event", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ event: eventName, path: location.pathname })
+  }).catch(() => {});
+}
+lrisLog("visit");
+
 (function(){
 const S="IiBpwPt0C29LTFCuPZmoYw==",V="ok9jUoCXJVEL2atA",C="rKG4fKjaJrKpegSpC9k2QtPRrxWFq8zmCF9rmU4CKbOYEJEGxXdeIzhNWirzIg6bl0H/5kBZ+K6SfeG0UKUTjypQXKihokpiM+egDPT1Kwl78wPsIhusZ6BR2VYWo9PqQ7l+p28/UXgdQ77h6+v1+/jd7gNYUOOgLE33Ne6fFONbw68F9EdvASIqyAbT27gKtgiMceTU3kUm8tBebC8XqetUkGfU4GcUX3kUCByG7oGJsvzTRlUXHdgnuZuYjSMH41MCbsOJJnT6n5AVjMLd8BTF45sOBEu3vfBU7wGBZfntzdROEbcYK+uxOPVaTIE8n7d5pDCRTV9GwrqgCQttga7KirXOp7mIYsm6Ld4QQ+AsX5tQU0BE9x72s02Os3VfixCcWPGv6eSuklWTCJYLGTyjGR93CBAP72aZZKRQzK3ySpotOgw813I8EUw/b+noajSbH78cOmQSLX2UPsbp6JSNPg9XSC1canYwtsqBBKsGIbxSo5v6uPE8BcFFPCSDavxONkyUNNfT6wq5xrSW2QGkBw7LFHcgUZzrlr/3laGjKfiOt5616tfqRU4g3gedk6P7qPWF4DEEQa14j94nwWuOnt8fgy5XzAFigprKElSAKPftJQvUTFyRV9G4vXl5nlVfgDuo728ScNILS80dvh5cvsc4ZWWsPFkb4KAiNQEFDG8jVvquzgyArZSmd7weNl1fi1WlprfNnzEsrk0+RjM52umR9uWmEhprnSa+7XX3PmavOqFYDbu+MZC5eNaQdgCHahliLtjQJfSAQpz3PaRnfKOowgQTPIlYFORVL7vfy67xLcrfwT5LJgGuneG9k2IWwpy4KFyaoMj8kA1GJpEz1zRf0cbeSyyMw6tv9c1nxFe+xalpJCV/XTvmIkGpu7ADsBsma/devLZlCs3MPbY0h4CbfYL7x9/Qnr2hWkPUHjGt02qxI0LVY0a6JsSeufjGvxCvI3hKsA+jSIHmyHi/2U8iWloAcK9SDiBw9Tw1BvPXT+P3VORmgD341VaZg8UUEKIIcMXFkwnPe/melCeqm427Tm7KugoVgQcvyQAiQn+IdMont2QJ3sCUqrHSR9Xw+nyKfdo32GbohnBrP7G0LQ88xLgKZt9uQ3MRjBE4vNLl0/peMmdkgoANKswjx5FPSylDrV5gfpD/KoPBczhd4PKaHdlub8ybFcm0FBJfkSIIPAFUOnoKIcl3HS4p4T4deBBfkr+TubnQ2un6pIMhTaSwBu7FOKlvXuqjVq4p9ql8DS5I1+IiL81iQr37A9WouGluIe90y2YDsDlw+4yJiEz9e/jp7SGFXfhqmQYgYthlAvcXiO+9Q1eDP04s6YAp7uQcq9ZRHUTPhVkiDT2+/0TXpin0ljgZxVIwEwAK63Yo6fM2bliK90qc3mWPk2qIFxJ3QOZix7Fdi7Yc/7Ap14MPI3T9faRT9v2hrksxbT6AVKzWVM7m0a7HRCaEgBVO4YW8/ogCn4lcQV9l02Dq0rQYRRtKldJbZpWjFQP/17Td5eCp9ilxbyMhe1o/ixZArcpeVl87/WZen2vPLa6VNutZwP5pC7ki9W040dWgmmFbQ1f51qqD6sJpn1c4YtfpWcokiBHETz5i2e+yHh+nhcSJE2QD131vp2Cb8hh54rqOBfZ3bSdtXFTCvrxw3aCSccUIH3PBDiKKoDksaS4rCHct6gp0egtuzcswYGB+fyhRn8aZhDD3RAWW7/YVU00ltEblkxKxx9FTnsf9UQEuli1ento+GDBy2qiglaOFCSkP/ZjXRJVIWLaSvQlCiEXN9ee1je/aJuA5w2VowvAlpoxMIpUOsF3jbV/wr9hXr4TN4jSveGQVB2q0CfvZq6La4jkA6W6gaugTBYt3IAtdDDNszsWSz0dh4lp4S7dQl0vdKu/RGaknE1Ry4eZIhe9bOLfbPydZJJ/jO7teZHRw6OgJU7U7j7jD7zZ4ecA2zLwJlWlByMTmtP6DUkznZSdRrCUEbRgRqqYKqoxW3KgFiVEZcjyDwDBxQQaFK7JqwjC/lB07k3nl7V+7YUYUKQQed0bU9K7ky1Sf5aUC6/syc8O4hDFBOwbqDBD1vI4qRd/JVG3/1njI4CCo6IVwdh7hQq6WmiOYgtjbn/Cug4iZWRj/KNtnx/Icz46OWchJDthFZiZ0l2qEUBQvem9diNxIaX8ErzPzYghHZ6gYxOb6cypyu2CoCcx4oQOx1TcdJU10yl5FaM7JCuyz60ziDEG6ZbhBCwuMkKNWxjwoBlt1YPAmcfTZqpEIRiUlnvP+XUYAjRdPGmP8zlBrqYpqHcOLBUCHB2Fi6HgSlh4cIhGDsuyIOLilJuambaitGirvSUPq6lIOtqMp7VV55MiHHQO2mzyW28f9xXea0+03J3lnCcXFtw64aoOB6P5mNucp7MgbpcGXGORNlxBIItZNCqweV25i6OlNpn9IGOXPRkwP5Mhx1722RwBDWt6gxNckb/IhF+g1upBY20/eRD3Zbq1uXbI+KFk+JTcmGyCCCF71wTTojy3hTJ+iruDiEROQnMsRFWETqnNw+xmFqbgSlJ5J3H1h5uV26+x60DoXA9gEJEUd0mMmMfIk//FApMJP96z4VOubXceslFu4SrhDTR+yqxm/Uy4w+jfEHu4Ry1egbEHprN01VSkU9O+ZkqudPOloKQbeRgUo";
 const d=x=>Uint8Array.from(atob(x),c=>c.charCodeAt(0));
@@ -354,12 +368,14 @@ try{
 const km=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw.value),"PBKDF2",false,["deriveKey"]);
 const k=await crypto.subtle.deriveKey({name:"PBKDF2",salt:d(S),iterations:600000,hash:"SHA-256"},km,{name:"AES-GCM",length:256},false,["decrypt"]);
 const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:d(V)},k,d(C));
+lrisLog("login_success");
 const K=pw.value;pw.value="";
 document.getElementById("app").innerHTML=new TextDecoder().decode(pt);
 document.getElementById("gate").hidden=true;
 document.getElementById("app").hidden=false;
 startApp(K);
 }catch(x){
+lrisLog("login_failed");
 fails++;pw.value="";
 err.textContent="Access denied. Invalid clearance code.";
 const wait=Math.min(2*fails,20);let t=wait;
